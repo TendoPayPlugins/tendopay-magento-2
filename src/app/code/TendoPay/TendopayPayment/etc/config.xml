@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * TendoPay
+ *
+ * Do not edit or add to this file if you wish to upgrade to newer versions in the future.
+ * If you wish to customize this module for your needs.
+ *
+ * @category   TendoPay
+ * @package    TendoPay_TendopayPayment
+ * @license    http://www.gnu.org/licenses/gpl-3.0.html
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <payment>
+            <tendopay>
+                <model>TendoPay\TendopayPayment\Model\Standard</model>
+                <active>1</active>
+                <title>TendoPay - Buy now, pay later with TendoPay</title>
+                <message><![CDATA[<p>Your personal data will be used to process your order, support your experience throughout this website, and for other purposes described in our <a href="#" class="privacy-policy-link" target="_blank">privacy policy</a>.</p>]]></message>
+                <order_status>pending</order_status>
+                <api_mode>sandbox</api_mode>
+                <debug>1</debug>
+                <allowspecific>0</allowspecific>
+                <redirect_url>tendopay/standard/redirect</redirect_url>
+                <return_url>tendopay/standard/response</return_url>
+                <cancel_url>tendopay/standard/cancel</cancel_url>
+                <api_merchant_secret backend_model="Magento\Config\Model\Config\Backend\Encrypted"/>
+                <api_client_secret backend_model="Magento\Config\Model\Config\Backend\Encrypted"/>
+            </tendopay>
+        </payment>
+    </default>
+</config>
