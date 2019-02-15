@@ -20,6 +20,8 @@ define([
             'template':'TendoPay_TendopayPayment/payment/tendopay'
         },
 
+        redirectAfterPlaceOrder: false,
+
         /** Open window with  */
         showAcceptanceWindow: function (data, event) {
             window.open(
@@ -48,6 +50,11 @@ define([
         /** Returns payment acceptance mark message */
         getPaymentAcceptanceMarkMessage: function () {
             return window.checkoutConfig.payment.tendopay.paymentAcceptanceMarkMessage;
+        },
+
+        /** Returns payment acceptance mark message */
+        getPaymentMethodVisibility: function () {
+            return window.checkoutConfig.payment.tendopay.visibility;
         },
 
         afterPlaceOrder: function () {

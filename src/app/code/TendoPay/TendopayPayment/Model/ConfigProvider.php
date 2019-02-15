@@ -73,9 +73,19 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
     public function getConfig()
     {
         $params = ['_secure' => $this->request->isSecure()];
+        $visibility = false;
+        if (!empty($this->tendopay->getConfigData('api_merchant_id')) &&
+            !empty($this->tendopay->getConfigData('api_merchant_secret')) &&
+            !empty($this->tendopay->getConfigData('api_client_id')) &&
+            !empty($this->tendopay->getConfigData('api_client_secret'))
+        ) {
+            $visibility = true;
+        }
+
         return $this->method->isAvailable() ? [
             'payment'=>[
                 'tendopay'=> [
+                    'visibility' => $visibility,
                     'redirectUrl' => $this->tendopay->getRedirectUrl(),
                     'paymentAcceptanceMarkSrc' => $this->assetRepository->getUrlWithParams(
                         'TendoPay_TendopayPayment::images/tendopay.png',
