@@ -93,7 +93,7 @@ class Adapterv1
 
         $params['order'] = [
             'id' => (string)$this->storeManager->getStore()->getCurrentCurrency()->getCode(),
-            'shipping' => round((float)$shippingAddress->getShippingInclTax(), $precision),
+            'shipping' => ($shippingAddress) ? round((float)$shippingAddress->getShippingInclTax(), $precision) : 0,
             'subtotal' => $object->getSubtotal(),
             'total' => round((float)$object->getGrandTotal(), $precision)
         ];
