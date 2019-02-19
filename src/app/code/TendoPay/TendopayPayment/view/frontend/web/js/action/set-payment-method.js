@@ -57,14 +57,24 @@ define(
                     } else {
                         fullScreenLoader.stopLoader();
                         alert({
-                            content: $.mage.__('Sorry, something went wrong. Please try again.')
+                            content: $.mage.__('Sorry, something went wrong. Please try again.'),
+                            actions: {
+                                always: function () {
+                                    location.reload(true);
+                                }
+                            }
                         });
                     }
                 },
                 error: function (response) {
                     fullScreenLoader.stopLoader();
                     alert({
-                        content: $.mage.__('Sorry, something went wrong. Please try again later.')
+                        content: $.mage.__('Sorry, something went wrong. Please try again later.'),
+                        actions: {
+                            always: function () {
+                                location.reload(true);
+                            }
+                        }
                     });
                 }
             });
