@@ -17,7 +17,7 @@
             <tendopay>
                 <model>TendoPay\TendopayPayment\Model\Standard</model>
                 <active>1</active>
-                <title>TendoPay - Buy now, pay later with TendoPay</title>
+                <title>Installments by TendoPay</title>
                 <message><![CDATA[<p>Your personal data will be used to process your order, support your experience throughout this website, and for other purposes described in our <a href="#" class="privacy-policy-link" target="_blank">privacy policy</a>.</p>]]></message>
                 <order_status>pending</order_status>
                 <api_mode>sandbox</api_mode>
