@@ -104,6 +104,14 @@ class Data extends AbstractHelper
 
     const TEMPLATE_OPTION_TITLE_CUSTOM = 'tendopay/payment/title.phtml';
 
+    /**
+     * Marketing label constants
+     */
+    const TENDOPAY_LOGO_BLUE = 'https://s3-ap-southeast-1.amazonaws.com/tendo-static/logo/tp-logo-example-payments.png';
+    const TENDOPAY_MARKETING = 'https://app.tendopay.ph/register';
+    const REPAYMENT_SCHEDULE_API_ENDPOINT_URI = "payments/api/v1/repayment-calculator?tendopay_amount=%s";
+    const REPAYMENT_CALCULATOR_INSTALLMENT_AMOUNT = 'installment_amount';
+
     /* Configuration fields */
     const API_ENABLED_FIELD = 'payment/tendopay/active';
     const API_MODE_CONFIG_FIELD = 'payment/tendopay/api_mode';
@@ -116,6 +124,7 @@ class Data extends AbstractHelper
     const API_MERCHANT_SECRET_CONFIG_FIELD = 'payment/tendopay/api_merchant_secret';
     const API_CLIENT_ID_CONFIG_FIELD = 'payment/tendopay/api_client_id';
     const API_CLIENT_SECRET_CONFIG_FIELD = 'payment/tendopay/api_client_secret';
+    const OPTION_TENDOPAY_EXAMPLE_INSTALLMENTS_ENABLE = 'payment/tendopay/tendo_example_installments_enabled';
 
     /* Order payment statuses */
     const RESPONSE_STATUS_APPROVED = 'APPROVED';
@@ -221,6 +230,38 @@ class Data extends AbstractHelper
     }
 
     /**
+     * @return string
+     */
+    public function getRepaymentCalculatorInstallmentAmount()
+    {
+        return self::REPAYMENT_CALCULATOR_INSTALLMENT_AMOUNT;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRepaymentScheduleApiEndpointUri()
+    {
+        return self::REPAYMENT_SCHEDULE_API_ENDPOINT_URI;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTendopayCheckoutTitle()
+    {
+        return self::TEMPLATE_OPTION_TITLE_CUSTOM;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTendopayMethodCode()
+    {
+        return self::METHOD_WPS;
+    }
+
+    /**
      * Gets the hash algorithm.
      *
      * @return string hash algorithm
@@ -280,6 +321,16 @@ class Data extends AbstractHelper
         return $this->isSandboxEnabled() ? self::SANDBOX_BEARER_TOKEN_ENDPOINT_URI : self::BEARER_TOKEN_ENDPOINT_URI;
     }
 
+    /**
+     * Gets the bearer token endpoint uri. It checks whether to use SANDBOX URI or Production URI.
+     *
+     * @return string bearer token endpoint uri
+     */
+    public function getRepaymentCalculatorApiEndpointUrl()
+    {
+        $baseUrl = $this->isSandboxEnabled() ? self::SANDBOX_BASE_API_URL : self::BASE_API_URL;
+        return $baseUrl . "/" . self::REPAYMENT_SCHEDULE_API_ENDPOINT_URI;
+    }
     /**
      *
      * @return bool true if sandbox is enabled
@@ -572,6 +623,13 @@ class Data extends AbstractHelper
     /**
      * @return string
      */
+    public static function getTendoExampleInstallmentsEnabled()
+    {
+        return self::OPTION_TENDOPAY_EXAMPLE_INSTALLMENTS_ENABLE;
+    }
+    /**
+     * @return string
+     */
     public function getCgiUrl()
     {
         $env = $this->getConfigValues(self::getAPIModeConfigField());
@@ -620,6 +678,22 @@ class Data extends AbstractHelper
             $path,
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
+    }
+
+    /**
+     * @return string
+     */
+    public function getTendopayLogoBlue()
+    {
+        return self::TENDOPAY_LOGO_BLUE;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTendopayMarketing()
+    {
+        return self::TENDOPAY_MARKETING;
     }
 
     /**
@@ -764,5 +838,15 @@ class Data extends AbstractHelper
         }
 
         return self::$_bearerToken->token;
+    }
+
+    public function getDefaultHeaders()
+    {
+        return [
+            'Authorization' => 'Bearer ' . $this->getBearerToken(),
+            'Accept'        => 'application/json',
+            'Content-Type'  => 'application/json',
+            'X-Using'       => 'TendoPay Magento2 Plugin',
+        ];
     }
 }

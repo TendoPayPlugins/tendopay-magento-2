@@ -47,6 +47,7 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
      */
     protected $tendopay;
 
+    public $url;
     /**
      * ConfigProvider constructor.
      * @param \Magento\Payment\Helper\Data $paymenthelper
@@ -59,12 +60,14 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
         \Magento\Payment\Helper\Data $paymenthelper,
         AssetRepository $assetRepository,
         RequestInterface $request,
-        \TendoPay\TendopayPayment\Model\Standard $tendopay
+        \TendoPay\TendopayPayment\Model\Standard $tendopay,
+        \Magento\Framework\UrlInterface $url
     ) {
         $this->method = $paymenthelper->getMethodInstance($this->methodCode);
         $this->assetRepository = $assetRepository;
         $this->request = $request;
         $this->tendopay = $tendopay;
+        $this->url = $url;
     }
 
     /**
@@ -92,7 +95,8 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
                         $params
                     ),
                     'paymentAcceptanceMarkHref' => TendoPayHelper::TENDO_PAY_FAQ_URL,
-                    'paymentAcceptanceMarkMessage' => $this->tendopay->getConfigData('message')
+                    'paymentAcceptanceMarkMessage' => $this->tendopay->getConfigData('message'),
+                    'tendopayMarketingPopup' => $this->url->getUrl('tendopay/standard/popupbox')
                 ]
             ]
         ]:[];
