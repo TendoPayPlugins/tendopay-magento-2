@@ -189,8 +189,19 @@ class Data extends AbstractHelper
      */
     protected $productMetadata;
 
+    /**
+     * @var \Magento\Framework\Serialize\SerializerInterface
+     */
+    public $serializer;
+
+    /**
+     * @var \Magento\Quote\Model\QuoteFactory
+     */
     protected $quote;
 
+    /**
+     * @var Used for GuzzleHttp client $client
+     */
     protected $client;
 
     /**
@@ -203,6 +214,8 @@ class Data extends AbstractHelper
      * @param \Magento\Framework\Message\ManagerInterface $messageManager
      * @param \Magento\Quote\Model\QuoteFactory $quote
      * @param \TendoPay\TendopayPayment\Logger\Logger $tendopayLogger
+     * @param \Magento\Framework\App\ProductMetadataInterface $productMetadata
+     * @param \Magento\Framework\Serialize\SerializerInterface $serializer
      * @param Context $context
      */
     public function __construct(
@@ -215,6 +228,7 @@ class Data extends AbstractHelper
         \Magento\Quote\Model\QuoteFactory $quote,
         \TendoPay\TendopayPayment\Logger\Logger $tendopayLogger,
         \Magento\Framework\App\ProductMetadataInterface $productMetadata,
+        \Magento\Framework\Serialize\SerializerInterface $serializer,
         Context $context
     ) {
         parent::__construct($context);
@@ -227,6 +241,7 @@ class Data extends AbstractHelper
         $this->messageManager = $messageManager;
         $this->tendopayLogger = $tendopayLogger;
         $this->productMetadata = $productMetadata;
+        $this->serializer = $serializer;
     }
 
     /**
@@ -831,7 +846,7 @@ class Data extends AbstractHelper
 
             $this->configWriter->save(
                 'payment/tendopay/bearer_token',
-                serialize(self::$_bearerToken),
+                $this->serializer->serialize(self::$_bearerToken),
                 $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                 $scopeId = 0
             );
