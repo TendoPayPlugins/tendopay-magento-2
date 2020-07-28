@@ -132,15 +132,17 @@ class Redirect extends \TendoPay\TendopayPayment\Controller\TendopayAbstract
      */
     public function setDescription($authorizationToken, $order)
     {
-        $orderDetails = $this->checkoutHelper->getApiAdapter()->buildOrderTokenRequest($order);
-        if (!is_array($orderDetails) && !is_object($orderDetails)) {
-            throw new \Magento\Framework\Exception\LocalizedException(
-                __('Order details parameter must be either ARRAY or OBJECT')
-            );
-        }
-
-        if (empty($orderDetails)) {
-            return;
+        $orderDetails = null;
+        try {
+            $orderDetails = $this->checkoutHelper->getApiAdapter()->buildOrderTokenRequest($order);
+            if (!is_array($orderDetails) && !is_object($orderDetails)) {
+                throw new \Magento\Framework\Exception\LocalizedException(
+                    __('Order details parameter must be either ARRAY or OBJECT')
+                );
+            }
+        } catch (\Exception $e) {
+            $this->checkoutHelper->addTendopayLog($e->getMessage(), 'warning');
+            $orderDetails = new \StdClass;
         }
 
         $response = $this->checkoutHelper->doCall(
