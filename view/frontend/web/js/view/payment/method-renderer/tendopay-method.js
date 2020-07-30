@@ -20,20 +20,29 @@ define([
             'template':'TendoPay_TendopayPayment/payment/tendopay'
         },
 
+        initialize: function () {
+            $('body').append(
+                '<div class="tendopay__popup__container" style="display: none;">' +
+                '<div class="tendopay__popup__iframe-wrapper">' +
+                '<div class="tendopay__popup__close"></div>' +
+                '<iframe src="' + window.checkoutConfig.payment.tendopay.tendopayMarketingPopup + '" class="tendopay__popup__iframe"></iframe>' +
+                '</div>' +
+                '</div>'
+            );
+
+            $('.tendopay__popup__close').click(function () {
+                $('.tendopay__popup__container').toggle();
+            });
+
+            this._super();
+            return this;
+        },
+
         redirectAfterPlaceOrder: false,
 
         /** Open window with  */
         showAcceptanceWindow: function (data, event) {
-            window.open(
-                $(event.currentTarget).attr('href'),
-                'olcwhatispaypal',
-                'toolbar=no, location=no,' +
-                ' directories=no, status=no,' +
-                ' menubar=no, scrollbars=yes,' +
-                ' resizable=yes, ,left=0,' +
-                ' top=0, width=400, height=350'
-            );
-
+            $('.tendopay__popup__container').show();
             return false;
         },
 

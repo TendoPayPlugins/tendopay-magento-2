@@ -104,6 +104,14 @@ class Data extends AbstractHelper
 
     const TEMPLATE_OPTION_TITLE_CUSTOM = 'tendopay/payment/title.phtml';
 
+    /**
+     * Marketing label constants
+     */
+    const TENDOPAY_LOGO_BLUE = 'https://s3-ap-southeast-1.amazonaws.com/tendo-static/logo/tp-logo-example-payments.png';
+    const TENDOPAY_MARKETING = 'https://app.tendopay.ph/register';
+    const REPAYMENT_SCHEDULE_API_ENDPOINT_URI = "payments/api/v1/repayment-calculator?tendopay_amount=%s";
+    const REPAYMENT_CALCULATOR_INSTALLMENT_AMOUNT = 'installment_amount';
+
     /* Configuration fields */
     const API_ENABLED_FIELD = 'payment/tendopay/active';
     const API_MODE_CONFIG_FIELD = 'payment/tendopay/api_mode';
@@ -116,6 +124,7 @@ class Data extends AbstractHelper
     const API_MERCHANT_SECRET_CONFIG_FIELD = 'payment/tendopay/api_merchant_secret';
     const API_CLIENT_ID_CONFIG_FIELD = 'payment/tendopay/api_client_id';
     const API_CLIENT_SECRET_CONFIG_FIELD = 'payment/tendopay/api_client_secret';
+    const OPTION_TENDOPAY_EXAMPLE_INSTALLMENTS_ENABLE = 'payment/tendopay/tendo_example_installments_enabled';
 
     /* Order payment statuses */
     const RESPONSE_STATUS_APPROVED = 'APPROVED';
@@ -180,8 +189,19 @@ class Data extends AbstractHelper
      */
     protected $productMetadata;
 
+    /**
+     * @var \Magento\Framework\Serialize\SerializerInterface
+     */
+    public $serializer;
+
+    /**
+     * @var \Magento\Quote\Model\QuoteFactory
+     */
     protected $quote;
 
+    /**
+     * @var Used for GuzzleHttp client $client
+     */
     protected $client;
 
     /**
@@ -194,6 +214,8 @@ class Data extends AbstractHelper
      * @param \Magento\Framework\Message\ManagerInterface $messageManager
      * @param \Magento\Quote\Model\QuoteFactory $quote
      * @param \TendoPay\TendopayPayment\Logger\Logger $tendopayLogger
+     * @param \Magento\Framework\App\ProductMetadataInterface $productMetadata
+     * @param \Magento\Framework\Serialize\SerializerInterface $serializer
      * @param Context $context
      */
     public function __construct(
@@ -206,6 +228,7 @@ class Data extends AbstractHelper
         \Magento\Quote\Model\QuoteFactory $quote,
         \TendoPay\TendopayPayment\Logger\Logger $tendopayLogger,
         \Magento\Framework\App\ProductMetadataInterface $productMetadata,
+        \Magento\Framework\Serialize\SerializerInterface $serializer,
         Context $context
     ) {
         parent::__construct($context);
@@ -218,6 +241,39 @@ class Data extends AbstractHelper
         $this->messageManager = $messageManager;
         $this->tendopayLogger = $tendopayLogger;
         $this->productMetadata = $productMetadata;
+        $this->serializer = $serializer;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRepaymentCalculatorInstallmentAmount()
+    {
+        return self::REPAYMENT_CALCULATOR_INSTALLMENT_AMOUNT;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRepaymentScheduleApiEndpointUri()
+    {
+        return self::REPAYMENT_SCHEDULE_API_ENDPOINT_URI;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTendopayCheckoutTitle()
+    {
+        return self::TEMPLATE_OPTION_TITLE_CUSTOM;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTendopayMethodCode()
+    {
+        return self::METHOD_WPS;
     }
 
     /**
@@ -280,6 +336,16 @@ class Data extends AbstractHelper
         return $this->isSandboxEnabled() ? self::SANDBOX_BEARER_TOKEN_ENDPOINT_URI : self::BEARER_TOKEN_ENDPOINT_URI;
     }
 
+    /**
+     * Gets the bearer token endpoint uri. It checks whether to use SANDBOX URI or Production URI.
+     *
+     * @return string bearer token endpoint uri
+     */
+    public function getRepaymentCalculatorApiEndpointUrl()
+    {
+        $baseUrl = $this->isSandboxEnabled() ? self::SANDBOX_BASE_API_URL : self::BASE_API_URL;
+        return $baseUrl . "/" . self::REPAYMENT_SCHEDULE_API_ENDPOINT_URI;
+    }
     /**
      *
      * @return bool true if sandbox is enabled
@@ -572,6 +638,13 @@ class Data extends AbstractHelper
     /**
      * @return string
      */
+    public static function getTendoExampleInstallmentsEnabled()
+    {
+        return self::OPTION_TENDOPAY_EXAMPLE_INSTALLMENTS_ENABLE;
+    }
+    /**
+     * @return string
+     */
     public function getCgiUrl()
     {
         $env = $this->getConfigValues(self::getAPIModeConfigField());
@@ -620,6 +693,22 @@ class Data extends AbstractHelper
             $path,
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
+    }
+
+    /**
+     * @return string
+     */
+    public function getTendopayLogoBlue()
+    {
+        return self::TENDOPAY_LOGO_BLUE;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTendopayMarketing()
+    {
+        return self::TENDOPAY_MARKETING;
     }
 
     /**
@@ -757,12 +846,22 @@ class Data extends AbstractHelper
 
             $this->configWriter->save(
                 'payment/tendopay/bearer_token',
-                serialize(self::$_bearerToken),
+                $this->serializer->serialize(self::$_bearerToken),
                 $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                 $scopeId = 0
             );
         }
 
         return self::$_bearerToken->token;
+    }
+
+    public function getDefaultHeaders()
+    {
+        return [
+            'Authorization' => 'Bearer ' . $this->getBearerToken(),
+            'Accept'        => 'application/json',
+            'Content-Type'  => 'application/json',
+            'X-Using'       => 'TendoPay Magento2 Plugin',
+        ];
     }
 }
