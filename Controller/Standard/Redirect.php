@@ -12,172 +12,88 @@
 
 namespace TendoPay\TendopayPayment\Controller\Standard;
 
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Quote\Model\Quote;
+use TendoPay\SDK\Exception\TendoPayConnectionException;
+use TendoPay\TendopayPayment\Controller\TendopayAbstract;
+use TendoPay\TendopayPayment\Helper\Data;
+
 /**
  * Class Redirect
  * @package TendoPay\TendopayPayment\Controller\Standard
  */
-class Redirect extends \TendoPay\TendopayPayment\Controller\TendopayAbstract
+class Redirect extends TendopayAbstract
 {
-    /**
-     * @return \Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\Result\Json|\Magento\Framework\Controller\ResultInterface
-     * @throws \GuzzleHttp\Exception\GuzzleException
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
-     */
     public function execute()
     {
-        $this->checkoutHelper->addTendopayLog(
-            'Initiate Redirect Method',
-            'info'
-        );
-        if (!$this->getRequest()->isAjax()) {
-            $this->_cancelPayment();
-            $this->checkoutSession->restoreQuote();
-            $this->getResponse()->setRedirect(
-                $this->getCheckoutHelper()->getUrl('checkout')
-            );
-        }
-
-        $quote = $this->getQuote();
-        $email = $this->getRequest()->getParam('email');
-        if ($this->getCustomerSession()->isLoggedIn()) {
-            $this->getCheckoutSession()->loadCustomerQuote();
-            $quote->updateCustomerData($this->getQuote()->getCustomer());
-        } else {
-            $quote->setCustomerEmail($email);
-        }
-
-        if ($this->getCustomerSession()->isLoggedIn()) {
-            $quote->setCheckoutMethod(\Magento\Checkout\Model\Type\Onepage::METHOD_CUSTOMER);
-        } else {
-            $quote->setCheckoutMethod(\Magento\Checkout\Model\Type\Onepage::METHOD_GUEST);
-        }
-
-        $quote->setCustomerEmail($email);
-        $quote->save();
-
-        $order = $this->getOrder();
-        if (!$order->getIncrementId()) {
-            $message = 'Payment redirect request: Cannot get order from session, redirecting customer to shopping cart';
-            $this->messageManager->addErrorMessage(
-                $message
-            );
-            $this->checkoutHelper->addTendopayLog($message, 'error');
-            return $this->_redirect('checkout/cart');
-        }
-        $this->checkoutHelper->addTendopayLog(
-            'Payment redirect request for order ' . $order->getIncrementId(),
-            'info'
-        );
-        $this->checkoutHelper->addTendopayLog(
-            'Redirecting customer to TendoPay website... order=' . $order->getIncrementId(),
-            'info'
-        );
         try {
-            $authToken = $this->requestToken($order);
-            $this->setDescription($authToken, $order);
-        } catch (\Exception $e) {
-            throw new \Magento\Framework\Exception\LocalizedException(__("Could not communicate with TendoPay."));
-        }
-
-        $session = $this->checkoutHelper->getCheckoutSession();
-        $session->setTendopayStandardQuoteId($session->getQuoteId());
-        $params = $this->getPaymentMethod()->buildCheckoutRequest($authToken);
-
-        if (empty($params)) {
-            $this->checkoutHelper->addTendopayLog(
-                'Exception on processing payment redirect request',
-                'error'
-            );
-            $this->cancelAction();
-        }
-        return $this->resultJsonFactory->create()->setData($params);
-    }
-
-    /**
-     * Call API to get Authorization Token
-     *
-     * @param $order
-     * @return string
-     * @throws \GuzzleHttp\Exception\GuzzleException
-     * @throws \Magento\Framework\Exception\LocalizedException
-     */
-    public function requestToken($order)
-    {
-        $data = [
-            $this->checkoutHelper->getAmountParam() => (int)($order->getGrandTotal()),
-            $this->checkoutHelper->getTendopayCustomerReferenceOne() => (string)$order->getIncrementId(),
-            $this->checkoutHelper->getTendopayCustomerReferencetwo() => "magento2_order_" . $order->getIncrementId(),
-        ];
-
-        $response = $this->checkoutHelper->doCall($this->checkoutHelper->getAuthorizationEndpointUri(), $data);
-        $isValidResponse = $response->getCode() === 200 && !empty($response->getBody());
-
-        if (!$isValidResponse) {
-            throw new \Magento\Framework\Exception\LocalizedException(
-                __('Got return code != 200 or empty body while requesting authorization token from TP')
-            );
-        }
-
-        return trim((string)$response->getBody(), "\"");
-    }
-
-    /**
-     * Call API to send order details to tendopay
-     *
-     * @param $authorizationToken
-     * @param $order
-     * @throws \GuzzleHttp\Exception\GuzzleException
-     * @throws \Magento\Framework\Exception\LocalizedException
-     */
-    public function setDescription($authorizationToken, $order)
-    {
-        $orderDetails = null;
-        try {
-            $orderDetails = $this->checkoutHelper->getApiAdapter()->buildOrderTokenRequest($order);
-            if (!is_array($orderDetails) && !is_object($orderDetails)) {
-                throw new \Magento\Framework\Exception\LocalizedException(
-                    __('Order details parameter must be either ARRAY or OBJECT')
-                );
+            $url = $this->getRedirectUrl();
+            if ($url) {
+                $this->getResponse()->setRedirect($url);
+                return;
             }
-        } catch (\Exception $e) {
-            $this->checkoutHelper->addTendopayLog($e->getMessage(), 'warning');
-            $orderDetails = new \StdClass;
+        } catch (LocalizedException $e) {
+            $this->messageManager->addWarningMessage($e->getMessage());
+        } catch (TendoPayConnectionException $e) {
+            $this->messageManager->addWarningMessage($e->getMessage());
         }
 
-        $response = $this->checkoutHelper->doCall(
-            $this->checkoutHelper->getDescriptionEndpointUri(),
-            [
-                $this->checkoutHelper->getAuthTokenParam() => $authorizationToken,
-                $this->checkoutHelper->getTendopayCustomerReferenceOne() => (string)$order->getIncrementId(),
-                $this->checkoutHelper->getTendopayCustomerReferencetwo() => "magento2_order_" .
-                    $order->getIncrementId(),
-                $this->checkoutHelper->getDescParam() => json_encode($orderDetails),
-            ]
-        );
-
-        if ($response->getCode() !== 204) {
-            throw new \Magento\Framework\Exception\LocalizedException(
-                __('Got response code != 204 while sending products description')
-            );
-        }
-    }
-
-    /**
-     * Cancel Action
-     *
-     * @throws \Exception
-     */
-    private function cancelAction()
-    {
-        $this->checkoutSession->setQuoteId($this->checkoutSession->getTendopayStandardQuoteId(true));
-        if ($this->checkoutSession->getLastRealOrderId()) {
-            $order = $this->orderFactory->create()->loadByIncrementId($this->checkoutSession->getLastRealOrderId());
-            if ($order->getId()) {
-                $order->cancel()->save();
-            }
-            $this->checkoutHelper->restoreQuote();
-        }
         $this->_redirect('checkout/cart');
+    }
+
+    /**
+     * Call API to get Authorization Url
+     *
+     * @param Quote $quote
+     * @return string
+     * @throws LocalizedException
+     * @throws TendoPayConnectionException
+     */
+    public function requestUrl(Quote $quote)
+    {
+        $quote = $quote->collectTotals();
+
+        if ($quote->getGrandTotal() < 100) {
+            throw new LocalizedException(
+                __('The minimum purchase amount is ₱100. Please increase your cart total.')
+            );
+        }
+
+        $quote->reserveOrderId();
+        $this->quoteRepository->save($quote);
+        $client = $this->_clientFactory->create();
+
+        $payment = $this->_paymentFactory->create();
+        $payment->setMerchantOrderId($quote->getReservedOrderId())
+            ->setRequestAmount((int)$quote->getGrandTotal())
+            ->setCurrency($quote->getQuoteCurrencyCode())
+            ->setRedirectUrl($this->checkoutHelper->getRedirectUrl());
+        /* Debug */
+        if ($this->_config->getValue('debug')) {
+            $requestData = [
+                Data::PAYMENT_REQUST_PARAM_AMOUNT => $payment->getRequestAmount(),
+                Data::PAYMENT_REQUST_PARAM_MECHANT_ORDER_ID => $payment->getMerchantOrderId(),
+                Data::PAYMENT_REQUST_PARAM_CURRENCY => $payment->getCurrency(),
+                Data::PAYMENT_REQUST_PARAM_REDIRECT => $payment->getRedirectUrl(),
+                Data::PAYMENT_REQUST_PARAM_DESCRIPTION => $payment->getDescription()
+            ];
+            $this->logger->debug(json_encode($requestData));
+        }
+        /* END Debug */
+
+        $client->setPayment($payment);
+        return $client->getAuthorizeLink();
+    }
+
+    /**
+     * @throws LocalizedException
+     * @throws TendoPayConnectionException
+     */
+    public function getRedirectUrl()
+    {
+        $this->initCheckout();
+        $quote = $this->getQuote();
+
+        return $this->requestUrl($quote);
     }
 }

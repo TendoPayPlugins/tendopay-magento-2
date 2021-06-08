@@ -12,25 +12,20 @@
 
 namespace TendoPay\TendopayPayment\Model;
 
-use \TendoPay\TendopayPayment\Helper\Data as TendoPayHelper;
-use Magento\Framework\View\Asset\Repository as AssetRepository;
+use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\UrlInterface;
+use Magento\Framework\View\Asset\Repository as AssetRepository;
+use Magento\Payment\Gateway\ConfigInterface;
+use TendoPay\TendopayPayment\Helper\Data as TendoPayHelper;
 
 /**
  * Class ConfigProvider
  * @package TendoPay\TendopayPayment\Model
  */
-class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
+class ConfigProvider implements ConfigProviderInterface
 {
-    /**
-     * @var string
-     */
-    protected $methodCode = TendoPayHelper::METHOD_WPS;
-
-    /**
-     * @var \Magento\Payment\Model\MethodInterface
-     */
-    protected $method;
+    const CODE = 'tendopay';
 
     /**
      * @var AssetRepository
@@ -43,31 +38,31 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
     protected $request;
 
     /**
-     * @var Standard
+     * @var UrlInterface
      */
-    protected $tendopay;
-
     public $url;
     /**
+     * @var ConfigInterface
+     */
+    private $config;
+
+    /**
      * ConfigProvider constructor.
-     * @param \Magento\Payment\Helper\Data $paymenthelper
      * @param AssetRepository $assetRepository
+     * @param UrlInterface $url
+     * @param ConfigInterface $config
      * @param RequestInterface $request
-     * @param Standard $tendopay
-     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function __construct(
-        \Magento\Payment\Helper\Data $paymenthelper,
         AssetRepository $assetRepository,
-        RequestInterface $request,
-        \TendoPay\TendopayPayment\Model\Standard $tendopay,
-        \Magento\Framework\UrlInterface $url
+        UrlInterface $url,
+        ConfigInterface $config,
+        RequestInterface $request
     ) {
-        $this->method = $paymenthelper->getMethodInstance($this->methodCode);
         $this->assetRepository = $assetRepository;
-        $this->request = $request;
-        $this->tendopay = $tendopay;
         $this->url = $url;
+        $this->config = $config;
+        $this->request = $request;
     }
 
     /**
@@ -77,28 +72,27 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
     {
         $params = ['_secure' => $this->request->isSecure()];
         $visibility = false;
-        if (!empty($this->tendopay->getConfigData('api_merchant_id')) &&
-            !empty($this->tendopay->getConfigData('api_merchant_secret')) &&
-            !empty($this->tendopay->getConfigData('api_client_id')) &&
-            !empty($this->tendopay->getConfigData('api_client_secret'))
+        if (!empty($this->config->getValue('api_client_id')) &&
+            !empty($this->config->getValue('api_client_secret'))
         ) {
             $visibility = true;
         }
 
-        return $this->method->isAvailable() ? [
-            'payment'=>[
-                'tendopay'=> [
+        return $this->config->getValue('active') ? [
+            'payment' => [
+                'tendopay' => [
                     'visibility' => $visibility,
-                    'redirectUrl' => $this->tendopay->getRedirectUrl(),
+                    'redirectUrl' => $this->url->getUrl($this->config->getValue('redirect_url'), $params),
                     'paymentAcceptanceMarkSrc' => $this->assetRepository->getUrlWithParams(
                         'TendoPay_TendopayPayment::images/tendopay.png',
                         $params
                     ),
                     'paymentAcceptanceMarkHref' => TendoPayHelper::TENDO_PAY_FAQ_URL,
-                    'paymentAcceptanceMarkMessage' => $this->tendopay->getConfigData('message'),
-                    'tendopayMarketingPopup' => $this->url->getUrl('tendopay/standard/popupbox')
+                    'paymentAcceptanceMarkMessage' => $this->config->getValue('message'),
+                    'tendopayMarketingPopup' => $this->url->getUrl('tendopay/standard/popupbox'),
+                    'minTotalAmount' => $this->config->getValue('min_total_amount'),
                 ]
             ]
-        ]:[];
+        ] : [];
     }
 }

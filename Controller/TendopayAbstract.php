@@ -13,8 +13,9 @@
 namespace TendoPay\TendopayPayment\Controller;
 
 use Magento\Framework\App\Action\Context;
+use TendoPay\TendopayPayment\Client\ClientFactoryInterface;
 
-class TendopayAbstract extends \Magento\Framework\App\Action\Action
+abstract class TendopayAbstract extends \Magento\Framework\App\Action\Action
 {
     /**
      * @var \Magento\Checkout\Model\Session
@@ -47,11 +48,6 @@ class TendopayAbstract extends \Magento\Framework\App\Action\Action
     protected $quote;
 
     /**
-     * @var \TendoPay\TendopayPayment\Model\Standard
-     */
-    protected $paymentMethod;
-
-    /**
      * @var \TendoPay\TendopayPayment\Helper\Data
      */
     protected $checkoutHelper;
@@ -65,6 +61,30 @@ class TendopayAbstract extends \Magento\Framework\App\Action\Action
      * @var \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
      */
     protected $resultJsonFactory;
+    /**
+     * @var \TendoPay\TendopayPayment\Model\Service\TendoFactory
+     */
+    private $_tendoService;
+    /**
+     * @var \TendoPay\TendopayPayment\Model\Service\Tendo
+     */
+    protected $_service;
+    /**
+     * @var Context
+     */
+    private $context;
+    /**
+     * @var ClientFactoryInterface
+     */
+    protected $_clientFactory;
+    /**
+     * @var \TendoPay\TendopayPayment\Client\Model\PaymentFactory
+     */
+    protected $_paymentFactory;
+    /**
+     * @var \Magento\Payment\Gateway\ConfigInterface
+     */
+    protected $_config;
 
     public function __construct(
         Context $context,
@@ -73,21 +93,29 @@ class TendopayAbstract extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Api\CartRepositoryInterface $quoteRepository,
         \Magento\Sales\Model\OrderFactory $orderFactory,
         \Psr\Log\LoggerInterface $logger,
-        \TendoPay\TendopayPayment\Model\Standard $paymentMethod,
         \TendoPay\TendopayPayment\Helper\Data $checkoutHelper,
         \Magento\Quote\Api\CartManagementInterface $cartManagement,
-        \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
+        \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
+
+        \Magento\Payment\Gateway\ConfigInterface $config,
+        \TendoPay\TendopayPayment\Model\Service\TendoFactory $tendoService,
+        ClientFactoryInterface $clientFactory,
+    \TendoPay\TendopayPayment\Client\Model\PaymentFactory $paymentFactory
     ) {
         parent::__construct($context);
         $this->customerSession = $customerSession;
         $this->checkoutSession = $checkoutSession;
         $this->quoteRepository = $quoteRepository;
         $this->orderFactory = $orderFactory;
-        $this->paymentMethod = $paymentMethod;
         $this->checkoutHelper = $checkoutHelper;
         $this->cartManagement = $cartManagement;
         $this->resultJsonFactory = $resultJsonFactory;
         $this->logger = $logger;
+        $this->_tendoService = $tendoService;
+        $this->context = $context;
+        $this->_clientFactory = $clientFactory;
+        $this->_paymentFactory = $paymentFactory;
+        $this->_config = $config;
     }
 
     /**
@@ -174,14 +202,6 @@ class TendopayAbstract extends \Magento\Framework\App\Action\Action
     }
 
     /**
-     * @return \TendoPay\TendopayPayment\Model\Standard
-     */
-    public function getPaymentMethod()
-    {
-        return $this->paymentMethod;
-    }
-
-    /**
      * @return \TendoPay\TendopayPayment\Helper\Data
      */
     protected function getCheckoutHelper()
@@ -189,7 +209,18 @@ class TendopayAbstract extends \Magento\Framework\App\Action\Action
         return $this->checkoutHelper;
     }
 
-    public function execute()
+    protected function _initService()
     {
+        $quote = $this->getQuote();
+
+        if (!$this->_service) {
+            $parameters = [
+                'params' => [
+                    'quote' => $quote,
+//                    'config' => $this->_config,
+                ],
+            ];
+            $this->_service = $this->_tendoService->create($parameters);
+        }
     }
 }

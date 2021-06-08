@@ -47,16 +47,19 @@
             <!-- ko template: getTemplate() --><!-- /ko -->
             <!--/ko-->
         </div>
+        <!-- ko if: (checkMinTotalAmount() == false) -->
+            <div role="alert" class="message warning">
+                <span data-bind="text: getMinTotalAmountMessage()"></span>
+            </div>
+        <!--/ko-->
         <div class="actions-toolbar">
             <div class="primary">
                 <button class="action primary checkout"
                         type="submit"
                         data-bind="
-                    click: placeOrder,
-                    enable: (getCode() == isChecked())
-                    "
-                        disabled>
-                    <span data-bind="i18n: 'Continue Checkout'"></span>
+                    click: continueToTendoPay,
+                    enable: (isButtonEnabled())" disabled>
+                    <span data-bind="i18n: 'Continue with TendoPay'"></span>
                 </button>
             </div>
         </div>
