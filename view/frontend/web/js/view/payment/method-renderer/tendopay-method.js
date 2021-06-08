@@ -10,14 +10,18 @@
  */
 define([
     'jquery',
+    'mage/translate',
     'Magento_Checkout/js/view/payment/default',
-    'TendoPay_TendopayPayment/js/action/set-payment-method'
-],function ($, Component, setPaymentMethod) {
+    'Magento_Checkout/js/model/payment/additional-validators',
+    'Magento_Paypal/js/action/set-payment-method',
+    'Magento_Customer/js/customer-data',
+    'Magento_Checkout/js/model/quote'
+], function ($, $t, Component, additionalValidators, setPaymentMethodAction, customerData, quote) {
     'use strict';
 
     return Component.extend({
-        defaults:{
-            'template':'TendoPay_TendopayPayment/payment/tendopay'
+        defaults: {
+            'template': 'TendoPay_TendopayPayment/payment/tendopay'
         },
 
         initialize: function () {
@@ -65,9 +69,47 @@ define([
         getPaymentMethodVisibility: function () {
             return window.checkoutConfig.payment.tendopay.visibility;
         },
+        getMinTotalAmount: function () {
+            return window.checkoutConfig.payment.tendopay.minTotalAmount;
+        },
 
-        afterPlaceOrder: function () {
-            setPaymentMethod();
+        continueToTendoPay() {
+            if (additionalValidators.validate()) {
+                //update payment method information if additional data was changed
+                this.selectPaymentMethod();
+                setPaymentMethodAction(this.messageContainer).done(
+                    function () {
+                        customerData.invalidate(['cart']);
+                        $.mage.redirect(
+                            window.checkoutConfig.payment.tendopay.redirectUrl
+                        );
+                    }
+                );
+
+                return false;
+            }
+        },
+
+        isButtonEnabled() {
+            return this.getCode() === this.isChecked() && this.checkMinTotalAmount();
+        },
+
+        getGrandTotal: function () {
+            let totals = quote.getTotals()();
+
+            if (totals) {
+                return totals['grand_total'];
+            }
+
+            return quote['grand_total'];
+        },
+
+        checkMinTotalAmount() {
+            return this.getGrandTotal() > this.getMinTotalAmount();
+        },
+
+        getMinTotalAmountMessage() {
+            return $t('Min Total Order Amount %1₱').replace('%1', this.getMinTotalAmount);
         }
     });
 });

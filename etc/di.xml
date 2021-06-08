@@ -11,9 +11,19 @@
  * @license    http://www.gnu.org/licenses/gpl-3.0.html
  */
 -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:
-ObjectManager/etc/config.xsd">
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <preference for="Psr\Log\LoggerInterface" type="Magento\Framework\Logger\Monolog" />
+    <preference for="TendoPay\TendopayPayment\Client\ClientFactoryInterface" type="TendoPay\TendopayPayment\Client\ClientFactory" />
+    <type name="TendoPay\TendopayPayment\Client\ClientFactory">
+        <arguments>
+            <argument name="config" xsi:type="object">TendoPaymentGatewayConfig</argument>
+        </arguments>
+    </type>
+    <type name="TendoPay\TendopayPayment\Controller\TendopayAbstract">
+        <arguments>
+            <argument name="config" xsi:type="object">TendoPaymentGatewayConfig</argument>
+        </arguments>
+    </type>
 
     <!-- Logger and Handler -->
     <type name="TendoPay\TendopayPayment\Logger\Handler">
@@ -29,4 +39,82 @@ ObjectManager/etc/config.xsd">
             </argument>
         </arguments>
     </type>
+
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="TendoPaymentGatewayFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="const">TendoPay\TendopayPayment\Model\ConfigProvider::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">TendoPay\TendopayPayment\Block\Adminhtml\Payment\Info</argument>
+            <argument name="valueHandlerPool" xsi:type="object">TendoPaymentGatewayValueHandlerPool</argument>
+            <argument name="commandPool" xsi:type="object">TendoPaymentGatewayCommandPool</argument>
+            <argument name="validatorPool" xsi:type="object">TendoPaymentValidatorPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="TendoPaymentGatewayValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">TendoPaymentGatewayConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="TendoPaymentGatewayConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">TendoPaymentGatewayConfig</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <virtualType name="TendoPaymentGatewayConfig" type="Magento\Payment\Gateway\Config\Config">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">TendoPay\TendopayPayment\Model\ConfigProvider::CODE</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Commands infrastructure -->
+    <virtualType name="TendoPaymentGatewayCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="capture" xsi:type="string">TendoPaymentSaleCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Authorize and Capture command -->
+    <virtualType name="TendoPaymentSaleCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">TendoPay\TendopayPayment\Gateway\Request\AuthorizationRequestBuilder</argument>
+            <argument name="handler" xsi:type="object">TendoPay\TendopayPayment\Gateway\Response\CompleteSaleHandler</argument>
+            <argument name="transferFactory" xsi:type="object">TendoPay\TendopayPayment\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">TendoPay\TendopayPayment\Gateway\Http\Client\CaptureClient</argument>
+        </arguments>
+    </virtualType>
+    <!-- END Authorize and Capture command -->
+
+    <!-- Authorize command -->
+    <type name="TendoPay\TendopayPayment\Gateway\Request\AuthorizationRequestBuilder">
+        <arguments>
+            <argument name="config" xsi:type="object">TendoPaymentGatewayConfig</argument>
+        </arguments>
+    </type>
+    <!-- END Authorize command -->
+
+    <!-- Tendo validators infrastructure -->
+    <virtualType name="TendoPaymentCurrencyValidator" type="TendoPay\TendopayPayment\Gateway\Validator\CurrencyValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">TendoPaymentGatewayConfig</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="TendoPaymentValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="currency" xsi:type="string">TendoPaymentCurrencyValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <!-- END Tendo validators infrastructure -->
+
 </config>

@@ -97,8 +97,8 @@ class Adapterv1
             'subtotal' => $object->getSubtotal(),
             'total' => round((float)$object->getGrandTotal(), $precision)
         ];
-        if (!empty($object) && $object->getReservedOrderId()) {
-            $params['merchantReference'] = (string)$object->getReservedOrderId();
+        if (!empty($object) && $object->getId()) {
+            $params['merchantReference'] = (string)$object->getId();
         }
 
         return $params;

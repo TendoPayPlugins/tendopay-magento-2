@@ -12,9 +12,9 @@
 
 namespace TendoPay\TendopayPayment\Helper;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
-use Magento\Framework\App\Config\ScopeConfigInterface;
 
 /**
  * Class Data
@@ -22,6 +22,28 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
  */
 class Data extends AbstractHelper
 {
+    const CLIENT_ID_KEY = 'CLIENT_ID';
+    const CLIENT_SECRET_KEY = 'CLIENT_SECRET';
+    const REDIRECT_URL_KEY = 'REDIRECT_URL';
+    const TENDOPAY_SANDBOX_ENABLED = 'TENDOPAY_SANDBOX_ENABLED';
+
+    const PAYMENT_INFO_TP_TRANSACTION_ID = 'tp_transaction_id';
+
+    const TRANSACTION_INFO_STATUS = 'tp_transaction_status';
+    const TRANSACTION_INFO_ID = 'tp_transaction_id';
+    const TRANSACTION_INFO_CREATED_AT = 'tp_created_at';
+
+    const TRANSACTION_STATUS_PAID = 'PAID';
+    const TRANSACTION_STATUS_CANCELED = 'CANCELED';
+
+    const PAYMENT_REQUST_PARAM_AMOUNT = 'tp_amount';
+    const PAYMENT_REQUST_PARAM_CURRENCY = 'tp_currency';
+    const PAYMENT_REQUST_PARAM_MECHANT_ORDER_ID = 'tp_merchant_order_id';
+    const PAYMENT_REQUST_PARAM_DESCRIPTION = 'tp_description';
+    const PAYMENT_REQUST_PARAM_REDIRECT = 'tp_redirect_url';
+
+
+    
     const PAYMANET_FAILED_QUERY_PARAM = 'tendopay_payment_failed';
     const METHOD_WPS = 'tendopay';
     const REDIRECT_URL_PATTERN = '^tendopay-result/?';
@@ -34,8 +56,9 @@ class Data extends AbstractHelper
     const REDIRECT_URI = 'https://app.tendopay.ph/payments/authorise';
     const VIEW_URI_PATTERN = 'https://app.tendopay.ph/view/transaction/%s';
     const VERIFICATION_ENDPOINT_URI = 'payments/api/v1/verification';
-    const AUTHORIZATION_ENDPOINT_URI = 'payments/api/v1/authTokenRequest';
     const DESCRIPTION_ENDPOINT_URI = 'payments/api/v1/paymentDescription';
+
+    const AUTHORIZATION_ENDPOINT_URI = 'payments/api/v2/order';
     const BEARER_TOKEN_ENDPOINT_URI = 'oauth/token';
 
     /**
@@ -52,20 +75,26 @@ class Data extends AbstractHelper
     /**
      * Below constant names are used as keys of data send to or received from TP API
      */
-    const AMOUNT_PARAM = 'tendopay_amount';
+
     const AUTH_TOKEN_PARAM = 'tendopay_authorisation_token';
     const TENDOPAY_CUSTOMER_REFERENCE_1 = 'tendopay_customer_reference_1';
     const TENDOPAY_CUSTOMER_REFERENCE_2 = 'tendopay_customer_reference_2';
-    const REDIRECT_URL_PARAM = 'tendopay_redirect_url';
     const VENDOR_ID_PARAM = 'tendopay_tendo_pay_vendor_id';
     const VENDOR_PARAM = 'tendopay_vendor';
-    const HASH_PARAM = 'tendopay_hash';
+//    const HASH_PARAM = 'tendopay_hash';
+
     const DISPOSITION_PARAM = 'tendopay_disposition';
     const TRANSACTION_NO_PARAM = 'tendopay_transaction_number';
     const VERIFICATION_TOKEN_PARAM = 'tendopay_verification_token';
     const DESC_PARAM = 'tendopay_description';
     const STATUS_PARAM = 'tendopay_status';
     const USER_ID_PARAM = 'tendopay_user_id';
+
+    const CURRENCY_PARAM = 'tp_currency';
+    const MERCHANT_ORDER_ID_PARAM = 'tp_merchant_order_id';
+    const REDIRECT_URL_PARAM = 'tp_redirect_url';
+    const AMOUNT_PARAM = 'tp_amount';
+    const HASH_PARAM = 'x_signature';
 
     const TENDO_PAY_FAQ_URL = 'https://tendopay.ph/page-faq.html';
 
@@ -138,7 +167,12 @@ class Data extends AbstractHelper
      * @var string $bearerToken the bearer token requested in previous API calls. If it's null, it will be taken from
      * wordpress options. If it was null or expired in the options, it will be then requested from the API.
      */
-    private static $_bearerToken;
+    private $_bearerToken;
+
+    /**
+     * @var int
+     */
+    private $_bearerTokenExpirationTimestamp;
 
     /**
      * @var string
@@ -313,7 +347,7 @@ class Data extends AbstractHelper
      */
     public function getAuthorizationEndpointUri()
     {
-        return $this->isSandboxEnabled() ? self::SANDBOX_AUTHORIZATION_ENDPOINT_URI : self::AUTHORIZATION_ENDPOINT_URI;
+        return self::AUTHORIZATION_ENDPOINT_URI;
     }
 
     /**
@@ -333,7 +367,7 @@ class Data extends AbstractHelper
      */
     public function getBearerTokenEndpointUri()
     {
-        return $this->isSandboxEnabled() ? self::SANDBOX_BEARER_TOKEN_ENDPOINT_URI : self::BEARER_TOKEN_ENDPOINT_URI;
+        return self::BEARER_TOKEN_ENDPOINT_URI;
     }
 
     /**
@@ -346,6 +380,7 @@ class Data extends AbstractHelper
         $baseUrl = $this->isSandboxEnabled() ? self::SANDBOX_BASE_API_URL : self::BASE_API_URL;
         return $baseUrl . "/" . self::REPAYMENT_SCHEDULE_API_ENDPOINT_URI;
     }
+
     /**
      *
      * @return bool true if sandbox is enabled
@@ -462,6 +497,19 @@ class Data extends AbstractHelper
     public function getAmountParam()
     {
         return self::AMOUNT_PARAM;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCurrencyParam()
+    {
+        return self::CURRENCY_PARAM;
+    }
+
+    public function getMerchantOrderIdParam()
+    {
+        return self::MERCHANT_ORDER_ID_PARAM;
     }
 
     /**
@@ -642,6 +690,7 @@ class Data extends AbstractHelper
     {
         return self::OPTION_TENDOPAY_EXAMPLE_INSTALLMENTS_ENABLE;
     }
+
     /**
      * @return string
      */
@@ -728,23 +777,30 @@ class Data extends AbstractHelper
      * @param array $data
      * @return string
      */
-    public function calculate(array $data)
+    public function calculate(array $payload)
     {
-        $secret = $this->getConfigValues(self::getAPIMerchantSecretConfigField());
-        $data = array_map(
-            function ($value) {
-                return trim($value);
-            },
-            $data
-        );
+        $client_secret = $this->getConfigValues(self::getAPIMerchantSecretConfigField());
+//        $data = array_map(
+//            function ($value) {
+//                return trim($value);
+//            },
+//            $data
+//        );
 
-        $hashKeysExclusionList = [$this->getHashParam()];
-        $exclusionList = $hashKeysExclusionList;
-        $data = $this->arrayFilterKeys($data, $exclusionList);
+//        $hashKeysExclusionList = [$this->getHashParam()];
+//        $exclusionList = $hashKeysExclusionList;
+//        $data = $this->arrayFilterKeys($data, $exclusionList);
 
-        ksort($data);
-        $message = join("", $data);
-        return hash_hmac($this->getHashAlgorithm(), $message, $secret, false);
+        ksort($payload);
+
+        $message = array_reduce(array_keys($payload), static function ($p, $k) use ($payload) {
+            return strpos($k, 'tp_') === 0 ? $p . $k . trim($payload[$k]) : $p;
+        }, '');
+        $hash = hash_hmac('sha256', $message, $client_secret);
+
+        return $hash;
+//        $message = join("", $data);
+//        return hash_hmac($this->getHashAlgorithm(), $message, $secret, false);
     }
 
     /**
@@ -756,10 +812,10 @@ class Data extends AbstractHelper
      */
     public function arrayFilterKeys($array, $exclusionList)
     {
-        $newArray= [];
+        $newArray = [];
         foreach ($array as $key => $value) {
             if (!in_array($key, $exclusionList) && !empty($value)) {
-                $newArray[$key]=$value;
+                $newArray[$key] = $value;
             }
         }
         return $newArray;
@@ -775,18 +831,20 @@ class Data extends AbstractHelper
      */
     public function doCall($url, array $data)
     {
-        $merchantId = $this->getConfigValues(self::getAPIMerchantIDConfigField());
-        $data[$this->getVendorIdParam()] = $merchantId;
-        $data[$this->getHashParam()] = $this->calculate($data);
+
+//        $merchantId = $this->getConfigValues(self::getAPIMerchantIDConfigField());
+//        $data[$this->getVendorIdParam()] = $merchantId;
+//        $data[$this->getHashParam()] = $this->calculate($data);
+        $data['x_signature'] = $this->calculate($data);
 
         $headers = [
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->getBearerToken(),
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
-                'X-Using' => 'TendoPay Magento2 Extension',
+//                'X-Using' => 'TendoPay Magento2 Extension',
             ],
-            'json' => $data
+            'body' => json_encode($data)
         ];
         $this->client = new \GuzzleHttp\Client(
             [
@@ -805,19 +863,19 @@ class Data extends AbstractHelper
      */
     private function getBearerToken()
     {
-
-        if (self::$_bearerToken === null) {
-            $bearerTokenConfigField = $this->getConfigValues(self::getBearerTokenConfigField());
-            self::$_bearerToken = $bearerTokenConfigField;
+        if ($this->_bearerToken === null) {
+            $bearerTokenConfigField = json_decode($this->getConfigValues(self::getBearerTokenConfigField()), true);
+            $this->_bearerToken = $bearerTokenConfigField['token'];
+            $this->_bearerTokenExpirationTimestamp = $bearerTokenConfigField['expiration_timestamp'];
         }
 
         $bearerExpirationTimestamp = -1;
-        if (self::$_bearerToken !== null && property_exists(self::$_bearerToken, 'expiration_timestamp')) {
-            $bearerExpirationTimestamp = self::$_bearerToken->expiration_timestamp;
+        if ($this->_bearerTokenExpirationTimestamp !== null) {
+            $bearerExpirationTimestamp = $this->_bearerTokenExpirationTimestamp;
         }
 
         $currentTimestamp = $this->dateTime->gmtTimestamp();
-        if ($bearerExpirationTimestamp <= $currentTimestamp - 30) {
+        if ($bearerExpirationTimestamp <= $currentTimestamp - 60) {
             $headers = [
                 'headers' => [
                     'Accept' => 'application/json',
@@ -840,28 +898,32 @@ class Data extends AbstractHelper
             $responseBody = (string)$response->getBody();
             $responseBody = json_decode($responseBody);
 
-            self::$_bearerToken = new \stdClass();
-            self::$_bearerToken->expiration_timestamp = $responseBody->expires_in + $currentTimestamp;
-            self::$_bearerToken->token = $responseBody->access_token;
+            $bearerToken = [
+                'expiration_timestamp' => $responseBody->expires_in + $currentTimestamp,
+                'token' => $responseBody->access_token
+            ];
+
+            $this->_bearerToken = $bearerToken['token'];
+            $this->_bearerTokenExpirationTimestamp = $bearerToken['expiration_timestamp'];
 
             $this->configWriter->save(
                 'payment/tendopay/bearer_token',
-                $this->serializer->serialize(self::$_bearerToken),
+                json_encode($bearerToken),
                 $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                 $scopeId = 0
             );
         }
 
-        return self::$_bearerToken->token;
+        return $this->_bearerToken;
     }
 
     public function getDefaultHeaders()
     {
         return [
             'Authorization' => 'Bearer ' . $this->getBearerToken(),
-            'Accept'        => 'application/json',
-            'Content-Type'  => 'application/json',
-            'X-Using'       => 'TendoPay Magento2 Plugin',
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+            'X-Using' => 'TendoPay Magento2 Plugin',
         ];
     }
 }

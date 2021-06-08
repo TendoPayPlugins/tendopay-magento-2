@@ -15,19 +15,24 @@
     <default>
         <payment>
             <tendopay>
-                <model>TendoPay\TendopayPayment\Model\Standard</model>
-                <active>1</active>
-                <title>Installments by TendoPay</title>
+                <model>TendoPaymentGatewayFacade</model>
+                <active>0</active>
+                <title>Pay with TendoPay</title>
                 <message><![CDATA[<p>Your personal data will be used to process your order, support your experience throughout this website, and for other purposes described in our <a href="#" class="privacy-policy-link" target="_blank">privacy policy</a>.</p>]]></message>
                 <tendo_example_installments_enabled>1</tendo_example_installments_enabled>
+                <can_use_checkout>1</can_use_checkout>
+                <payment_action>authorize_capture</payment_action>
+                <can_authorize>1</can_authorize>
+                <can_capture>1</can_capture>
+                <min_total_amount>100</min_total_amount>
+                <currency>PHP</currency>
                 <order_status>pending</order_status>
                 <api_mode>sandbox</api_mode>
-                <debug>1</debug>
+                <debug>0</debug>
                 <allowspecific>0</allowspecific>
                 <redirect_url>tendopay/standard/redirect</redirect_url>
                 <return_url>tendopay/standard/response</return_url>
-                <cancel_url>tendopay/standard/cancel</cancel_url>
-                <api_merchant_secret backend_model="Magento\Config\Model\Config\Backend\Encrypted"/>
+                <api_client_id backend_model="Magento\Config\Model\Config\Backend\Encrypted"/>
                 <api_client_secret backend_model="Magento\Config\Model\Config\Backend\Encrypted"/>
             </tendopay>
         </payment>
