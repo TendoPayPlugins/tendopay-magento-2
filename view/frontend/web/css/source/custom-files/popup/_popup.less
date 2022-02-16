@@ -1,0 +1,257 @@
+@popup-main__color: #3A1E68;
+
+& when (@media-common = true) {
+    .tendo-category-block {
+        cursor: pointer;
+    }
+    .tendo-modal-product-info{
+
+        .modal-inner-wrap {
+            max-width: 600px;
+            border-radius: 5px;
+            text-align: center;
+
+            .modal-header {
+
+                .modal-title-top {
+                    display: flex;
+                    justify-content: center;
+
+                    .modal-title-top-logo {
+                        width: 180px;
+                        height: 32px;
+                    }
+                }
+
+                .modal-title {
+                    font-weight: 800;
+
+                    border: none;
+                    color: @popup-main__color;
+                }
+            }
+
+            .modal-content {
+
+                .tendopay-modal-item {
+
+                    .tendopay-modal-item-img {
+                        width: 100px;
+                        height: 100px;
+                        border-radius: 50%;
+
+                        display: block;
+
+                        background-color: #F2EEFF;
+                        background-repeat: no-repeat;
+                        background-size: 45px;
+                        background-position: 50%;
+                    }
+
+                    p {
+                        font-weight: bold;
+
+                        color: @popup-main__color;
+                    }
+                }
+            }
+
+            footer.modal-footer {
+                display: flex;
+                justify-content: center;
+
+                border-color: transparent;
+
+                .tendopay-modal-button {
+                    width: 200px;
+                    padding: 18px 0;
+
+                    background: #04FFC5;
+                    border-radius: 5px;
+
+                    span {
+                        font-weight: bold;
+
+                        color: #1F2931;
+                    }
+                }
+            }
+
+            .modal-footer-bottom {
+                font-weight: normal;
+
+                color: #4D5A64;
+            }
+        }
+    }
+
+
+    .tendo-text {
+        font-weight: bold;
+        font-size: 11px;
+        line-height: 13px;
+
+        color: #000000;
+    }
+
+    .tendo-price {
+        font-style: normal;
+        font-weight: 800;
+        font-size: 13px;
+        line-height: 13px;
+
+        padding: 0 5px;
+
+        background: #F2EEFF;
+        border-radius: 100px;
+        color: @popup-main__color;
+    }
+
+    .tendo-ico {
+        display: inline-block;
+        width: 65px;
+        height: 12px;
+        background: url(../TendoPay_TendopayPayment/images/tp-logo-blue.png);
+        background-repeat: no-repeat;
+        background-size: contain;
+    }
+
+
+    .tendopay-modal-content-item img {
+        width: 100px;
+    }
+
+    .modal-title-top-logo {
+        background: url('../TendoPay_TendopayPayment/images/tp-logo-blue.png');
+        content: ' ';
+        display: inline-block;
+        height: 12px;
+        margin-left: 5px;
+        vertical-align: middle;
+        width: 12px;
+    }
+
+    .tendopay-modal-item-img{
+        height: 50px;
+        width: 50px;
+    }
+    .tendopay-modal-item-img-1 {
+        background: url('../TendoPay_TendopayPayment/images/thumbs-up-light.svg');
+    }
+    .tendopay-modal-item-img-2 {
+        background: url('../TendoPay_TendopayPayment/images/layer-group-light.svg');
+    }
+    .tendopay-modal-item-img-3 {
+        background: url('../TendoPay_TendopayPayment/images/shopping-cart-light.svg');
+    }
+
+}
+
+@media screen and (min-width: 768px) {
+    .tendo-modal-product-info{
+
+        .modal-inner-wrap {
+
+            .modal-header {
+                padding-bottom: 39px;
+
+                .modal-title-top {
+                    margin-bottom: 20px;
+                }
+
+                .modal-title {
+                    font-size: 45px;
+                    line-height: 45px;
+
+                    padding-bottom: 0;
+                }
+            }
+
+            .modal-content {
+                padding: 0 60px 39px;
+                display: flex;
+                justify-content: space-between;
+
+                .tendopay-modal-item {
+                    flex: 0 1 33%;
+
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+
+                    .tendopay-modal-item-img {
+                        margin-bottom: 20px;
+                    }
+
+                    p {
+                        font-size: 18px;
+                        line-height: 24px;
+                    }
+                }
+            }
+
+            .modal-footer {
+                padding: 0 30px 39px;
+
+                .tendopay-modal-button {
+                    span {
+                        font-size: 18px;
+                        line-height: 24px;
+                    }
+                }
+            }
+
+            .modal-footer-bottom {
+                font-size: 10px;
+                line-height: 15px;
+
+                margin-bottom: 20px;
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .tendo-modal-product-info{
+
+        .modal-inner-wrap {
+
+            .modal-header {
+
+                .modal-title-top {
+                    margin-bottom: 10px;
+                }
+
+                .modal-title {
+                    font-size: 30px;
+                    line-height: 35px;
+                }
+            }
+
+            .modal-content {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+
+                .tendopay-modal-item {
+                    &:not(:last-child) {
+                        margin-bottom: 15px;
+                    }
+                    .tendopay-modal-item-img {
+                        margin-bottom: 5px;
+                    }
+                }
+            }
+
+            .modal-footer {
+                padding: 0 30px 30px;
+            }
+
+            .modal-footer-bottom {
+                padding: 0 30px;
+                margin-bottom: 10px;
+            }
+        }
+    }
+}
+

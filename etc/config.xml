@@ -34,6 +34,7 @@
                 <return_url>tendopay/standard/response</return_url>
                 <api_client_id backend_model="Magento\Config\Model\Config\Backend\Encrypted"/>
                 <api_client_secret backend_model="Magento\Config\Model\Config\Backend\Encrypted"/>
+                <interest>regular</interest>
             </tendopay>
         </payment>
     </default>

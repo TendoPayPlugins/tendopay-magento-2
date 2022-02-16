@@ -59,7 +59,10 @@ define([
         getPaymentAcceptanceMarkSrc: function () {
             return window.checkoutConfig.payment.tendopay.paymentAcceptanceMarkSrc;
         },
-
+        /** Returns payment acceptance mark image path */
+        getPaymentAcceptanceFullMarkSrc: function () {
+            return window.checkoutConfig.payment.tendopay.paymentAcceptanceFullMarkSrc;
+        },
         /** Returns payment acceptance mark message */
         getPaymentAcceptanceMarkMessage: function () {
             return window.checkoutConfig.payment.tendopay.paymentAcceptanceMarkMessage;

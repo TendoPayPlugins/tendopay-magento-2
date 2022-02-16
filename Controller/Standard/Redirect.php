@@ -62,12 +62,15 @@ class Redirect extends TendopayAbstract
         $quote->reserveOrderId();
         $this->quoteRepository->save($quote);
         $client = $this->_clientFactory->create();
+        $name = $this->getStoreName() ? : $quote->getStore()->getUrl();
+        $description = $name . ' - ' . $quote->getQuoteCurrencyCode() . ' ' . (int)$quote->getGrandTotal();
 
         $payment = $this->_paymentFactory->create();
         $payment->setMerchantOrderId($quote->getReservedOrderId())
             ->setRequestAmount((int)$quote->getGrandTotal())
             ->setCurrency($quote->getQuoteCurrencyCode())
-            ->setRedirectUrl($this->checkoutHelper->getRedirectUrl());
+            ->setRedirectUrl($this->checkoutHelper->getRedirectUrl())
+            ->setDescription($description);
         /* Debug */
         if ($this->_config->getValue('debug')) {
             $requestData = [
@@ -75,14 +78,15 @@ class Redirect extends TendopayAbstract
                 Data::PAYMENT_REQUST_PARAM_MECHANT_ORDER_ID => $payment->getMerchantOrderId(),
                 Data::PAYMENT_REQUST_PARAM_CURRENCY => $payment->getCurrency(),
                 Data::PAYMENT_REQUST_PARAM_REDIRECT => $payment->getRedirectUrl(),
-                Data::PAYMENT_REQUST_PARAM_DESCRIPTION => $payment->getDescription()
+                Data::PAYMENT_REQUST_PARAM_DESCRIPTION => $description
             ];
             $this->logger->debug(json_encode($requestData));
         }
         /* END Debug */
 
         $client->setPayment($payment);
-        return $client->getAuthorizeLink();
+        $return = $client->getAuthorizeLink();
+        return $return;
     }
 
     /**
