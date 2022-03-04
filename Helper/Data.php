@@ -53,6 +53,7 @@ class Data extends AbstractHelper
      * Below constant names are used as live TP API
      */
     const BASE_API_URL = 'https://app.tendopay.ph/';
+    const BASE_API_URL_CALCULATOR = 'https://app.tendopay.ph/payments/api/v1/repayment-calculator';
     const REDIRECT_URI = 'https://app.tendopay.ph/payments/authorise';
     const VIEW_URI_PATTERN = 'https://app.tendopay.ph/view/transaction/%s';
     const VERIFICATION_ENDPOINT_URI = 'payments/api/v1/verification';
@@ -65,6 +66,7 @@ class Data extends AbstractHelper
      * Below constant names are used as sandbox TP API
      */
     const SANDBOX_BASE_API_URL = 'https://sandbox.tendopay.ph/';
+    const SANDBOX_BASE_API_URL_CALCULATOR = 'https://sandbox.tendopay.ph/payments/api/v1/repayment-calculator';
     const SANDBOX_REDIRECT_URI = 'https://sandbox.tendopay.ph/payments/authorise';
     const SANDBOX_VIEW_URI_PATTERN = 'https://sandbox.tendopay.ph/view/transaction/%s';
     const SANDBOX_VERIFICATION_ENDPOINT_URI = 'payments/api/v1/verification';
@@ -154,6 +156,7 @@ class Data extends AbstractHelper
     const API_CLIENT_ID_CONFIG_FIELD = 'payment/tendopay/api_client_id';
     const API_CLIENT_SECRET_CONFIG_FIELD = 'payment/tendopay/api_client_secret';
     const OPTION_TENDOPAY_EXAMPLE_INSTALLMENTS_ENABLE = 'payment/tendopay/tendo_example_installments_enabled';
+    const INTEREST_TYPE = 'payment/tendopay/interest_type';
 
     /* Order payment statuses */
     const RESPONSE_STATUS_APPROVED = 'APPROVED';
@@ -328,6 +331,16 @@ class Data extends AbstractHelper
     public function getBaseApiUrl()
     {
         return $this->isSandboxEnabled() ? self::SANDBOX_BASE_API_URL : self::BASE_API_URL;
+    }
+
+    /**
+     * Gets the base api URL. It checks whether to use SANDBOX URL or Production URL.
+     *
+     * @return string the base api url
+     */
+    public function getBaseApiUrlCalculator()
+    {
+        return $this->isSandboxEnabled() ? self::SANDBOX_BASE_API_URL_CALCULATOR : self::BASE_API_URL_CALCULATOR;
     }
 
     /**
@@ -925,5 +938,10 @@ class Data extends AbstractHelper
             'Content-Type' => 'application/json',
             'X-Using' => 'TendoPay Magento2 Plugin',
         ];
+    }
+
+    public function getInterestType()
+    {
+        return $this->getConfigValues(self::INTEREST_TYPE);
     }
 }

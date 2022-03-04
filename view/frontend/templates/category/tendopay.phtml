@@ -1,0 +1,29 @@
+<?php
+/** @var \TendoPay\TendopayPayment\ViewModel\Calculation $calculation */
+$calculation = $block->getData('calculation');
+
+/** @var \Magento\Catalog\Api\Data\ProductInterface | null $product */
+$product = $block->getProduct();
+if (!$product) {
+    return;
+}
+
+$tendopayAmount = $calculation->load($product)->getTendopayAmount();
+if (!$tendopayAmount) {
+    return;
+}
+
+$currencySymbol = $calculation->getCurrentCurrencySymbol();
+
+?>
+
+<div class="tendo-category-block show-popup"
+     data-total_installments="<?= $calculation->getTotalInstallments(); ?>">
+    <span class="tendo-text"><?= __('Or %1 payment of ', $calculation->getTotalInstallments()) ?></span>
+    <span class="tendo-price">
+        <?= $currencySymbol . ' ' . $calculation->getInstallmentAmount(); ?>
+    </span>
+    <span class="tendo-text"><?= __('with') ?></span>
+    <span class="tendo-ico"></span>
+</div>
+

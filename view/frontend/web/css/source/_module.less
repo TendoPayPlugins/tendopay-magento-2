@@ -8,6 +8,9 @@
 //  * @package    TendoPay_TendopayPayment
 //  * @license    http://www.gnu.org/licenses/gpl-3.0.html
 //  */
+
+@import "custom-files/popup/_popup";
+
 .checkout-index-index {
   .checkout-container {
     #payment {
@@ -169,4 +172,26 @@
   .product-info-stock-sku {
     padding-left: 10px !important;
   }
+}
+
+.checkout-payment-method .payment-method-title .tendopay-label .action-help {
+    border-left: 1px solid #0000009e;
+    line-height: 14px;
+    margin-left: 9px;
+    padding-left: 13px;
+    font-weight: 700;
+    font-size: 12px;
+    height: 28px;
+    width: 114px;
+}
+.checkout-index-index .checkout-container #payment .tendopay-payment-icon {
+    width: 101px;
+    float: left;
+    margin-right: 5px;
+    height: 18px;
+    margin-top: 6px;
+}
+.radio.tendopay-payment-input {
+    top: -4px;
+    position: relative;
 }

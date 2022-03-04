@@ -19,5 +19,23 @@
         </referenceContainer>
         <move element="product.price.final" destination="tendopay.product.price.info" before="-" />
         <move element="product.marketing.label" destination="tendopay.product.price.info" after="product.price.final" />
+       <referenceContainer name="tendopay.product.price.info">
+            <block class="TendoPay\TendopayPayment\Block\Catalog\Product"
+                   name="category.product.details.tendopay"
+                   ifconfig="payment/tendopay/active"
+                   after="-"
+                   template="TendoPay_TendopayPayment::category/tendopay.phtml">
+                <arguments>
+                    <argument name="calculation" xsi:type="object">TendoPay\TendopayPayment\ViewModel\Calculation</argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+        <referenceBlock name="content">
+            <block class="Magento\Framework\View\Element\Template"
+                   name="category.product.details.tendopay.popup"
+                   ifconfig="payment/tendopay/active"
+                   after="-"
+                   template="TendoPay_TendopayPayment::category/tendopay-popup.phtml"/>
+        </referenceBlock>
     </body>
 </page>

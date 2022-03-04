@@ -85,6 +85,10 @@ abstract class TendopayAbstract extends \Magento\Framework\App\Action\Action
      * @var \Magento\Payment\Gateway\ConfigInterface
      */
     protected $_config;
+    /**
+     * @var \Magento\Framework\App\Config\ScopeConfigInterface
+     */
+    private $_scopeConfig;
 
     public function __construct(
         Context $context,
@@ -96,7 +100,7 @@ abstract class TendopayAbstract extends \Magento\Framework\App\Action\Action
         \TendoPay\TendopayPayment\Helper\Data $checkoutHelper,
         \Magento\Quote\Api\CartManagementInterface $cartManagement,
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
-
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface,
         \Magento\Payment\Gateway\ConfigInterface $config,
         \TendoPay\TendopayPayment\Model\Service\TendoFactory $tendoService,
         ClientFactoryInterface $clientFactory,
@@ -116,6 +120,15 @@ abstract class TendopayAbstract extends \Magento\Framework\App\Action\Action
         $this->_clientFactory = $clientFactory;
         $this->_paymentFactory = $paymentFactory;
         $this->_config = $config;
+        $this->_scopeConfig = $scopeConfigInterface;
+    }
+
+    public function getStoreName()
+    {
+        return $this->_scopeConfig->getValue(
+            'general/store_information/name',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
     }
 
     /**

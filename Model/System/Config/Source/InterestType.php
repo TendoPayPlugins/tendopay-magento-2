@@ -16,10 +16,10 @@ namespace TendoPay\TendopayPayment\Model\System\Config\Source;
  * Class ApiMode
  * @package TendoPay\TendopayPayment\Model\System\Config\Source
  */
-class ApiMode implements \Magento\Framework\Option\ArrayInterface
+class InterestType implements \Magento\Framework\Option\ArrayInterface
 {
-    const ENVIRONMENT_PRODUCTION    = 'false';
-    const ENVIRONMENT_SANDBOX       = 'true';
+    const INTEREST_TYPE_REGULAR = 'regular';
+    const INTEREST_TYPE_ZERO    = 'zero';
 
     /**
      * Possible environment types
@@ -30,13 +30,13 @@ class ApiMode implements \Magento\Framework\Option\ArrayInterface
     {
         return [
             [
-                'value' => self::ENVIRONMENT_SANDBOX,
-                'label' => 'Sandbox',
+                'value' => self::INTEREST_TYPE_REGULAR,
+                'label' => __('Pay in installments')
             ],
             [
-                'value' => self::ENVIRONMENT_PRODUCTION,
-                'label' => 'Production'
-            ]
+                'value' => self::INTEREST_TYPE_ZERO,
+                'label' => __('Pay in 4 ez installments'),
+            ],
         ];
     }
 }
