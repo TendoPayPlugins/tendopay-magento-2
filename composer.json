@@ -2,7 +2,7 @@
     "name": "tendopay/tendopay-payment",
     "description": "TendoPay works as a payment method and allows users to spread their purchase across multiple instalments. User instalment payments are clearly visible with no hidden or additional fees. Application to TendoPay is quick, a user can get approved within 24 hours. Also users can manage their account from anywhere - desktop, mobile or tablet through the TendoPay admin panel. TendoPay was built to help provide users a more flexible payment method suited for timing that works for them",
     "type": "magento2-module",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "license": [
         "GNU"
     ],
