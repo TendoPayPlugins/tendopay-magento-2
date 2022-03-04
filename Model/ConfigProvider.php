@@ -87,6 +87,10 @@ class ConfigProvider implements ConfigProviderInterface
                         'TendoPay_TendopayPayment::images/tendopay.png',
                         $params
                     ),
+                    'paymentAcceptanceFullMarkSrc' => $this->assetRepository->getUrlWithParams(
+                        'TendoPay_TendopayPayment::images/tp-logo-blue.png',
+                        $params
+                    ),
                     'paymentAcceptanceMarkHref' => TendoPayHelper::TENDO_PAY_FAQ_URL,
                     'paymentAcceptanceMarkMessage' => $this->config->getValue('message'),
                     'tendopayMarketingPopup' => $this->url->getUrl('tendopay/standard/popupbox'),

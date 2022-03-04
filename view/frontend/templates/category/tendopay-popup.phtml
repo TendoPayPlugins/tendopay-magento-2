@@ -1,0 +1,13 @@
+<?php
+/** @var \TendoPay\TendopayPayment\Helper\Data $helper */
+$helper = $this->helper('TendoPay\TendopayPayment\Helper\Data');
+
+?>
+
+<div id="tendopay-modal"
+     style="display: none"
+     data-mage-init='{"tendoPopup": {}}'></div>
+
+<script>
+    window.tendoInterestType = "<?= $helper->getInterestType(); ?>";
+</script>
